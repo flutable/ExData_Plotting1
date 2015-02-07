@@ -1,3 +1,6 @@
+## Note
+My plots are immediately under the instructor's examples.
+
 ## Introduction
 
 This assignment uses data from
@@ -34,10 +37,6 @@ web site</a>:
 </ol>
 
 ## Loading the data
-
-
-
-
 
 When loading the dataset into R, please consider the following:
 
@@ -96,19 +95,21 @@ The four plots that you will need to construct are shown below.
 
 
 ![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
-
+![](https://github.com/flutable/ExData_Plotting1/blob/master/plot1.png)
 
 ### Plot 2
 
 ![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
-
+![](https://github.com/flutable/ExData_Plotting1/blob/master/plot2.png)
 
 ### Plot 3
 
 ![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+![](https://github.com/flutable/ExData_Plotting1/blob/master/plot3.png)
 
 
 ### Plot 4
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png)
+![](https://github.com/flutable/ExData_Plotting1/blob/master/plot4.png) 
 
