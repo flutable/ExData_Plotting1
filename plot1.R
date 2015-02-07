@@ -11,11 +11,18 @@ InstallIfNeeded <- function(pkg)  {
 # install/load libraries as necessary
 InstallIfNeeded("dplyr")
 
-# Read data
+# Read data into current folder
 fn <- "household_power_consumption.txt"
 if (!file.exists(fn)) {
-    powerconsumption <- read.table(fn,header = TRUE,sep=";",na.strings="?",stringsAsFactors=FALSE)
+   download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip",
+                 "household_power_consumption.zip")
+   unzip("household_power_consumption.zip")
 }
+
+#only re-read variable if necessary 
+if (!exists("powerconsumption")) {
+    powerconsumption <- read.table(fn,header = TRUE,sep=";",na.strings="?",stringsAsFactors=FALSE)
+} 
 
 # Filter to relevant data
 pc <- filter(powerconsumption, (Date=="1/2/2007"|Date=="2/2/2007"))
