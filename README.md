@@ -1,5 +1,7 @@
 ## Note
 My plots are immediately under the instructor's examples.
+The assignment requires plots of 480x480 pixels.
+The instructors are 504 x 504! That's why mine appear smaller.
 
 ## Introduction
 
