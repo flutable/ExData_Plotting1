@@ -1,6 +1,10 @@
-#DS04 Exploratory Data Analysis Project 1.2
+#DS04 Exploratory Data Analysis Project 2 Plot2
 
-# utility function
+#Q2 Have total emissions from PM2.5 decreased in the Baltimore City, Maryland (fips == "24510") from 1999 to 2008?
+#    A: Over that period, yes, though there was an increase in 2005.
+
+
+# utility function #Thanks StackOverflow!
 InstallIfNeeded <- function(pkg)  {
  if (!require(pkg, character.only = TRUE)) {
      install.packages(pkg)
@@ -11,35 +15,38 @@ InstallIfNeeded <- function(pkg)  {
 # install/load libraries as necessary
 InstallIfNeeded("dplyr")
 InstallIfNeeded("ggplot2")
-InstallIfNeeded("lattice")
 
-# Read data into current folder
-fn <- "household_power_consumption.txt"
-if (!file.exists(fn)) {
-    download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip",
-                  "household_power_consumption.zip")
-    unzip("household_power_consumption.zip")
+#-----Read data into current folder
+fnPM25Emissions <- "summarySCC_PM25.rds"
+fnSCCTable <- "Source_Classification_Code.rds"
+
+if ( !file.exists(fnPM25Emissions ) | !file.exists(fnSCCTable) ) {
+    message("Data file(s) missing, downloading....")
+    download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip","exdata_data_NEI_data.zip")
+    message("Unzipping data files...")
+    unzip("exdata_data_NEI_data.zip")
 }
 
-#only re-read variable if necessary 
-if (!exists("powerconsumption")) {
-    powerconsumption <- read.table(fn,header = TRUE,sep=";",na.strings="?",stringsAsFactors=FALSE)
+#----- Only re-read variable if necessary   #NEI takes about 20 seconds to read
+if (!exists("NEI")) {
+    message("NEI missing, now reading...")
+    NEI <- readRDS("summarySCC_PM25.rds")
+} 
+if (!exists("SCC")) {
+    message("SCC missing, now reading...")
+    SCC <- readRDS("Source_Classification_Code.rds")
 } 
 
-# Filter to relevant data via dplyr
-pc <- filter(powerconsumption, (Date=="1/2/2007"|Date=="2/2/2007"))
+# Group by years of interest
+NEI2 <- group_by(NEI,year)
 
-# Save memory
-#rm(powerconsumption)
+# Filter out Baltimore
+NEI2 <- filter(NEI2,fips == "24510")
 
-#Convert dates to POSIX
-pc$Date  <- as.POSIXlt(paste(as.Date(pc$Date,format="%d/%m/%Y"), pc$Time, sep=" "))
+# Plot to screen
+plot(summarize(NEI2,sum(Emissions)), xlab="Year",ylab= "tonnes (t)", main="Total PM25 emissions, all sources, Baltimore (tonnes)",pch=20)
 
-#Create plot on screen
-#plot(pc$Date,pc$Global_active_power,col="black", type="l", xlab= "", ylab="Global Active Power (kilowatts)") #gives a box plot unless dates are in POSIX format
-
-## Create plot and send to a file (no plot appears on screen)
-png(file = "plot2.png",width = 480, height = 480)  ## Open PNG device
-plot(pc$Date,pc$Global_active_power,col="black", type="l", 
-     xlab= "", ylab="Global Active Power (kilowatts)") #gives a box plot unless dates are in POSIX format
-dev.off()  ## Close the PNGF file device
+# Plot to file
+png(file = "plot2.png", width = 480, height = 480)  
+plot(summarize(NEI2,sum(Emissions)), xlab="Year",ylab= "tonnes (t)", main="Total PM25 emissions, all sources, Baltimore (tonnes)",pch=20)
+dev.off()  

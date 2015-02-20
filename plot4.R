@@ -1,6 +1,9 @@
-#DS04 Exploratory Data Analysis Project 1.2
+#DS04 Exploratory Data Analysis Project 2, plot 4
 
-# utility function
+# Q4 Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+#    A: From 1999, emissions decreased slightly in 2002 and 2005 but decreased considerably in 2008.
+
+# utility function #Thanks StackOverflow!
 InstallIfNeeded <- function(pkg)  {
  if (!require(pkg, character.only = TRUE)) {
      install.packages(pkg)
@@ -11,69 +14,54 @@ InstallIfNeeded <- function(pkg)  {
 # install/load libraries as necessary
 InstallIfNeeded("dplyr")
 InstallIfNeeded("ggplot2")
-InstallIfNeeded("lattice")
 
-# Read data into current folder
-fn <- "household_power_consumption.txt"
-if (!file.exists(fn)) {
-    download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip",
-                  "household_power_consumption.zip")
-    unzip("household_power_consumption.zip")
+#-----Read data into current folder
+fnPM25Emissions <- "summarySCC_PM25.rds"
+fnSCCTable <- "Source_Classification_Code.rds"
+
+if ( !file.exists(fnPM25Emissions ) | !file.exists(fnSCCTable) ) {
+    message("Data file(s) missing, downloading....")
+    download.file("https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2FNEI_data.zip","exdata_data_NEI_data.zip")
+    message("Unzipping data files...")
+    unzip("exdata_data_NEI_data.zip")
 }
 
-#only re-read variable if necessary 
-if (!exists("powerconsumption")) {
-    powerconsumption <- read.table(fn,header = TRUE,sep=";",na.strings="?",stringsAsFactors=FALSE)
+#----- Only re-read variable if necessary   #NEI takes about 20 seconds to read
+if (!exists("NEI")) {
+    message("NEI missing, now reading...")
+    NEI <- readRDS("summarySCC_PM25.rds")
+} 
+if (!exists("SCC")) {
+    message("SCC missing, now reading...")
+    SCC <- readRDS("Source_Classification_Code.rds")
 } 
 
-# Filter to relevant data via dplyr
-pc <- filter(powerconsumption, (Date=="1/2/2007"|Date=="2/2/2007"))
+# find all instances of EI.Sector having both "coal" or "comb"(ustion) in them, returning a logical index vector
+# Source: http://stackoverflow.com/questions/2219830/regular-expression-to-find-two-strings-anywhere-in-input
+coalsources <- grepl("(coal(.|\n)*comb)|(comb(.|\n)*coal)", SCC$EI.Sector, perl=TRUE, ignore.case=TRUE) #logical vector
 
-# Save memory
-#rm(powerconsumption)
 
-#Convert dates to POSIX
-pc$Date  <- as.POSIXlt(paste(as.Date(pc$Date,format="%d/%m/%Y"), pc$Time, sep=" "))
+# Create a subset of SCC containing only the "coal" SCC codes
+coalSCC <- subset(SCC,subset=coalsources)
 
-#Create plot on screen. Axis labels (cex.lab) and axis text (cex.axis) appear to be smaller than default, so I've used 0.9 as a scaling factor.
-#plot(pc$Date,pc$Sub_metering_1,col="black", type="l", xlab= "", ylab="Energy sub metering", cex.lab=0.9,cex.axis=0.9)
-#points(pc$Date,pc$Sub_metering_2,col="red",type="l")
-#points(pc$Date,pc$Sub_metering_3,col="blue",type="l")
-#legend("topright",c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"),col=c("Black","Red","Blue"),lwd=1,cex=0.9)
+# Create a subset of NEI with all fips (counties), and all SCCs in coalSCC
+NEIallUSA <- filter(NEI,SCC %in% coalSCC$SCC)
 
-#Set up multiple plot
-#par(mfrow=c(2,2))                 #2 rows, 2 colums
-#    #topleft plot Global Active Power
-#    plot(pc$Date,pc$Global_active_power,col="black", type="l", xlab= "", ylab="Global Active Power") 
+# Group by year so we can see the trend
+NEIallUSAgrp <- group_by(NEIallUSA,year)
 
-#    #topright Voltage vs time of day
-#    plot(pc$Date,pc$Voltage,col="black", type="l", xlab= "datetime", ylab="Voltage") 
+# Summarize by year
+summaryAllUSA <- summarize(NEIallUSAgrp,sum(Emissions))
 
-#    #bottomleft energy sub metering vs time of day. No character expansion here.
-#    plot(pc$Date,pc$Sub_metering_1,col="black", type="l", xlab= "", ylab="Energy sub metering")
-#    points(pc$Date,pc$Sub_metering_2,col="red",type="l")
-#    points(pc$Date,pc$Sub_metering_3,col="blue",type="l")
-#    legend("topright",c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"),col=c("Black","Red","Blue"),bty="n", lwd=1) #bty suppress the box
+# Give the result sensible names
+names(summaryAllUSA) <- c("Year","TotalEmissions")
 
-#    #bottomright global reactive power vs time of day
-#    plot(pc$Date,pc$Global_reactive_power,col="black", type="l", xlab= "datetime", ylab="Global_reactive_power") 
+# Create plot
+p <- ggplot(summaryAllUSA,aes(x=factor(Year),y=TotalEmissions)) +
+        geom_bar(stat="identity") +
+        xlab("Year") +
+        ylab("Total emissions USA by sector (coal combustion)") 
+print(p)
 
-## Create plot and send to a file (no plot appears on screen)
-png(file = "plot4.png",width = 480, height = 480)  ## Open PNG device
-#Set up multiple plot
-par(mfrow=c(2,2))                 #2 rows, 2 colums
-    #topleft plot Global Active Power
-    plot(pc$Date,pc$Global_active_power,col="black", type="l", xlab= "", ylab="Global Active Power") 
-
-    #topright Voltage vs time of day
-    plot(pc$Date,pc$Voltage,col="black", type="l", xlab= "datetime", ylab="Voltage") 
-
-    #bottomleft energy sub metering vs time of day. No character expansion here.
-    plot(pc$Date,pc$Sub_metering_1,col="black", type="l", xlab= "", ylab="Energy sub metering")
-    points(pc$Date,pc$Sub_metering_2,col="red",type="l")
-    points(pc$Date,pc$Sub_metering_3,col="blue",type="l")
-    legend("topright",c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"),col=c("Black","Red","Blue"),bty="n", lwd=1) #bty suppress the box
-
-    #bottomright global reactive power vs time of day
-    plot(pc$Date,pc$Global_reactive_power,col="black", type="l", xlab= "datetime", ylab="Global_reactive_power") 
-dev.off()  ## Close the PNG file device
+# Plot to file 
+ggsave(filename="plot4.png", width=480/72, height=480/72,dpi=72)
